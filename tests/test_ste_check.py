@@ -43,6 +43,36 @@ def test_anchor_case_insensitive_for_plain_words_only():
     assert "fact-retention" in checks(sc.check_render(bad))  # identifiers stay case-sensitive
 
 
+# --- anchors match whole tokens, not substrings (regression) ----------------
+@pytest.mark.parametrize("anchor,text", [
+    ("3", "Retry 300 times."),          # number inside a bigger number
+    ("8", "The pool has 18 workers."),
+    ("3", "Use version 1.3 now."),      # digit inside a version
+    ("3", "Wait 3.5 seconds."),         # digit inside a decimal
+    ("my_var", "Set my_var2 first."),   # identifier inside a longer one
+    ("REQUEST_TIMEOUT_S", "Set REQUEST_TIMEOUT now."),
+])
+def test_anchor_does_not_match_inside_longer_token(anchor, text):
+    assert not sc.anchor_present(anchor, text)
+
+
+@pytest.mark.parametrize("anchor,text", [
+    ("3", "Retry 3 times."),
+    ("my_var", "Set my_var."),          # sentence-final period
+    ("200ms", "Wait 200 ms first."),    # unit spacing differs
+    ("200 ms", "Wait 200ms first."),
+    ("unless", "Unless the key is set, stop."),  # plain word, case moved
+    ("--soft", "Run with --soft for 80% mode."),
+])
+def test_anchor_matches_legit_forms(anchor, text):
+    assert sc.anchor_present(anchor, text)
+
+
+def test_preserved_term_is_case_sensitive():
+    f = sc.check_retention([], ["`Redis`"], "We use redis here.")
+    assert "preserved-term" in checks(f)
+
+
 def test_claim_without_anchor_warns():
     f = sc.check_render(render("Text.", claims='[{"id":"C1","claim":"vague","anchors":[]}]'))
     assert "fact-retention" in checks(f, "warning")

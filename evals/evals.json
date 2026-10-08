@@ -1,0 +1,23 @@
+{
+  "skill_name": "ste-render",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "This PR description is way too dense, give me an 80% STE version: 'Refactors the session manager to lazily hydrate Redis-backed conversation state on first turn rather than eagerly at websocket connect, which reduces p50 connect latency from ~410ms to ~95ms but introduces a cold-read penalty (~60ms) on turn one unless the prefetch_on_dial flag is enabled; note that prefetch is not yet verified under the LiveKit SIP path.'",
+      "expected_output": "A .ste/ render file with Original, STE view, Preserved terms, Claims. STE view keeps 410ms, 95ms, 60ms, prefetch_on_dial, 'unless', and 'not yet verified'. Checker run with --soft and reported. No claim of STE compliance.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "explain how the ASR -> diarization -> LLM -> TTS pipeline in a voice agent fits together, as a diagram, STE style",
+      "expected_output": "Mermaid flowchart in the STE view, an ## Edges section with one sentence per edge, checker passes diagram-edges.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Write strict ASD-STE100 steps for rotating the AWS Bedrock API credentials used by our FastAPI service without downtime.",
+      "expected_output": "Numbered procedure, each step <= 20 words, imperative, one instruction per step, condition-first. Checker run in strict mode. Commands and env var names preserved exactly.",
+      "files": []
+    }
+  ]
+}

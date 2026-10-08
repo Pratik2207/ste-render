@@ -124,12 +124,30 @@ def parse_claims(body: str) -> list[dict]:
 # --------------------------------------------------------------------------
 # checks
 # --------------------------------------------------------------------------
-def anchor_present(anchor: str, haystack: str) -> bool:
-    if anchor in haystack:
+# Only collapse the gap before real units, so '3 times' stays two tokens.
+_UNITS = r"(?:ns|us|µs|ms|s|sec|min|h|hz|khz|mhz|ghz|b|kb|mb|gb|tb|kib|mib|gib|tib|%|x|k|m|bn|tok|tokens|rps|qps|fps|px)"
+_UNIT_GAP_RE = re.compile(r"(?<=\d)\s+(?=" + _UNITS + r"(?![\w]))", re.IGNORECASE)
+
+
+def anchor_present(anchor: str, haystack: str, exact_case: bool = False) -> bool:
+    """True if `anchor` appears as a whole token, not inside a longer one.
+
+    A bare substring test lets '3' match '300' and 'my_var' match 'my_var2',
+    which hides exactly the changes this check exists to catch.
+    '200 ms' and '200ms' count as the same.
+    """
+    anchor = _UNIT_GAP_RE.sub("", anchor.strip())
+    if not anchor:
+        return True
+    haystack = _UNIT_GAP_RE.sub("", haystack)
+    # Not preceded by a word char or 'x.' (as in v1.3); not followed by a word
+    # char or '.<word>' (as in 3.5 or my_var.attr).
+    pattern = r"(?<![\w.])" + re.escape(anchor) + r"(?![\w]|\.\w)"
+    if re.search(pattern, haystack):
         return True
     # Plain words may move to sentence start and change case.
-    if re.fullmatch(r"[A-Za-z][A-Za-z \-]*", anchor):
-        return re.search(r"\b" + re.escape(anchor) + r"\b", haystack, re.IGNORECASE) is not None
+    if not exact_case and re.fullmatch(r"[A-Za-z][A-Za-z \-]*", anchor):
+        return re.search(pattern, haystack, re.IGNORECASE) is not None
     return False
 
 
@@ -148,7 +166,7 @@ def check_retention(claims, preserved, ste_raw) -> list[Finding]:
                                    f"(claim: {c.get('claim', '')!r})"))
     for term in preserved:
         t = term.strip("`")
-        if t and t not in ste_raw:
+        if t and not anchor_present(t, ste_raw, exact_case=True):
             out.append(Finding("error", "preserved-term",
                                f"preserved term {t!r} is missing or changed in the STE view"))
     return out
