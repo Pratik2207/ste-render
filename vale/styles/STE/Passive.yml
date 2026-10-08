@@ -1,0 +1,7 @@
+extends: existence
+message: "'%s' looks passive. Use active voice (passive only when the agent is unknown)."
+level: warning
+ignorecase: true
+raw:
+  - \b(am|is|are|was|were|be|been|being)\s+(\w+ly\s+)?
+  - (\w+ed|built|done|made|known|written|given|taken|seen|shown|sent|kept|held|found|chosen|drawn|broken|hidden|thrown|frozen|spoken|driven|begun|brought|bought|caught|taught|thought|left|lost|meant|paid|said|sold|told|understood|won)\b

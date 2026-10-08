@@ -1,0 +1,16 @@
+extends: substitution
+message: "Use '%s' instead of '%s'. (House list, not the ASD dictionary.)"
+level: warning
+ignorecase: true
+swap:
+  in order to: to
+  prior to: before
+  utili[sz]e: use
+  leverage: use
+  facilitate: help
+  commence: start
+  due to the fact that: because
+  in the event that: if
+  it is imperative that: (state it directly)
+  a number of: some
+  with regard to: about

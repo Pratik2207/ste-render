@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install pytest
+      - run: python -m pytest -q
+      - name: Examples pass the checker
+        run: |
+          for f in examples/*.md examples/*.html; do
+            python scripts/ste_check.py "$f"
+          done
+
+  vale-styles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Vale
+        run: |
+          curl -sL https://github.com/errata-ai/vale/releases/download/v3.9.1/vale_3.9.1_Linux_64-bit.tar.gz | tar xz
+          sudo mv vale /usr/local/bin/
+      - name: Vale styles still catch a known-bad file
+        run: |
+          printf 'In order to start, the file is deleted; then it stops.\n' > /tmp/bad.md
+          if vale --config vale/.vale.ini /tmp/bad.md; then
+            echo "Vale styles did not flag a known-bad file"; exit 1
+          fi

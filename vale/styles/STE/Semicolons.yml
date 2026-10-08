@@ -1,0 +1,7 @@
+extends: existence
+message: "No semicolons. Split into two sentences."
+level: error
+nonword: true
+scope: sentence
+tokens:
+  - ';'

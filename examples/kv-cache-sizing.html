@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KV cache size explorer</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#6b6b66; --accent:#c4512b; --card:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161614; --fg:#ecebe6; --muted:#9a9993; --card:#1f1f1c; } }
+  body { margin:0; font:16px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width:720px; margin:0 auto; padding:2rem 1rem; }
+  .card { background:var(--card); border-radius:10px; padding:1rem 1.25rem; margin:1rem 0; }
+  label { display:block; margin:.75rem 0 .25rem; color:var(--muted); font-size:.9rem; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .out { font-size:2rem; font-weight:600; color:var(--accent); }
+  code { font-size:.9em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>KV cache size explorer</h1>
+  <p>The cache holds one key and one value vector per layer, per token, per KV head.</p>
+  <p><code>bytes = 2 × n_layers × n_kv_heads × head_dim × seq_len × batch × bytes_per_elem</code></p>
+
+  <section id="assumptions" class="card">
+    <h2>Assumptions</h2>
+    <ul>
+      <li>The model stores K and V separately (the factor 2).</li>
+      <li>No cache compression, paging overhead, or quantization beyond the dtype you pick.</li>
+      <li>Defaults match Llama-3-8B: 32 layers, 8 KV heads (GQA), head_dim 128.</li>
+    </ul>
+  </section>
+
+  <div class="card">
+    <label>Layers: <span id="lv"></span></label><input id="l" type="range" min="1" max="128" value="32">
+    <label>KV heads: <span id="hv"></span></label><input id="h" type="range" min="1" max="64" value="8">
+    <label>head_dim: <span id="dv"></span></label><input id="d" type="range" min="32" max="256" step="32" value="128">
+    <label>seq_len: <span id="sv"></span></label><input id="s" type="range" min="512" max="131072" step="512" value="8192">
+    <label>batch: <span id="bv"></span></label><input id="b" type="range" min="1" max="64" value="1">
+    <label>dtype</label>
+    <select id="t"><option value="2">fp16 / bf16 (2 bytes)</option><option value="1">fp8 / int8 (1 byte)</option></select>
+    <p class="out" id="out"></p>
+  </div>
+</main>
+<script>
+  const ids = ["l","h","d","s","b","t"];
+  function render() {
+    const v = Object.fromEntries(ids.map(i => [i, +document.getElementById(i).value]));
+    ["l","h","d","s","b"].forEach(i => document.getElementById(i+"v").textContent = v[i]);
+    const bytes = 2 * v.l * v.h * v.d * v.s * v.b * v.t;
+    document.getElementById("out").textContent = (bytes / 2**30).toFixed(2) + " GiB";
+  }
+  ids.forEach(i => document.getElementById(i).addEventListener("input", render));
+  render();
+</script>
+</body>
+</html>
